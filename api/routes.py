@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, Any
 
 # Все импорты строго вверху и один раз!
-from app.db import insert_detection, get_recent
+from app.db import get_recent_detections, insert_detection
 from core.detector import detect_vehicles
 
 logger = logging.getLogger(__name__)
@@ -21,6 +21,13 @@ ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".gif"}
 
 # Создаем папку для временных файлов
 TEMP_DIR.mkdir(exist_ok=True)
+
+
+@router.get("/detections/recent")
+def read_recent_detections(limit: int = 100) -> Dict[str, Any]:
+    if not 1 <= limit <= 1000:
+        raise HTTPException(status_code=422, detail="limit должен быть от 1 до 1000")
+    return {"items": get_recent_detections(limit=limit)}
 
 
 @router.post("/analyze")

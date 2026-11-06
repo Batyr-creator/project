@@ -1,22 +1,28 @@
 import os
 import shutil
+from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from .db import insert_metrics, get_recent  # настройте импорт под себя
+from .db import get_recent, insert_metrics
+from api.routes import router as traffic_router
 
 app = FastAPI(title="Система мониторинга транспортных потоков")
+app.include_router(traffic_router)
 
 # Создаем папку для сохранения картинок, если её нет
-UPLOAD_DIR = "static/uploads"
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+STATIC_DIR = PROJECT_DIR / "static"
+UPLOAD_DIR = STATIC_DIR / "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # Монтируем статику, чтобы картинки были доступны по URL (например, http://127.0.0.1:8000/static/uploads/photo.jpg)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.get("/")
 def read_root():
-    return {"status": "System Online"}
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 # Новый POST-эндпоинт, принимающий файл и метрики
